@@ -2,7 +2,6 @@
 
 
 **Features**
-Create a women’s safety app called SAHA that can:
 
 1. SOS Button (Instant Action)
 
