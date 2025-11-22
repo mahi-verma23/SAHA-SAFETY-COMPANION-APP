@@ -1,73 +1,88 @@
-# Welcome to your Lovable project
+# SAHA-- Your AI Companion
 
-## Project info
 
-**URL**: https://lovable.dev/projects/ceab4f69-b8fb-4036-93be-54468266ffc6
+**Features**
+Create a women’s safety app called SAHA that can:
 
-## How can I edit this code?
+1. SOS Button (Instant Action)
 
-There are several ways of editing your application.
+On click:
 
-**Use Lovable**
+Turn on flashlight
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ceab4f69-b8fb-4036-93be-54468266ffc6) and start prompting.
+Call emergency contacts
 
-Changes made via Lovable will be committed automatically to this repo.
+Send live location via SMS
 
-**Use your preferred IDE**
+Trigger loud siren
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Start automatic voice recording
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Start camera recording (if possible)
 
-Follow these steps:
+2. Voice Distress Detection (AI, Whisper)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Continuously listen (if permission given)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Detect keywords like:
 
-# Step 3: Install the necessary dependencies.
-npm i
+“Help”, “Bachao”, “Bacho”, “Save me”, “Mujhe bachao”
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Support Indian languages:
 
-**Edit a file directly in GitHub**
+Hindi, Marathi, Bengali, Tamil, Telugu, Malayalam, Gujarati, Punjabi, Kannada, Odia, Assamese
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+When detected:
 
-**Use GitHub Codespaces**
+Trigger SOS actions automatically
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. Regional Language Conversion (OpenAI GPT)
 
-## What technologies are used for this project?
+Entire app UI should auto-translate based on user selection
 
-This project is built with:
+Chatbot should support multilingual conversation for:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Guidance
 
-## How can I deploy this project?
+Emotional help
 
-Simply open [Lovable](https://lovable.dev/projects/ceab4f69-b8fb-4036-93be-54468266ffc6) and click on Share -> Publish.
+Post-incident assistance
 
-## Can I connect a custom domain to my Lovable project?
+4. Post-Incident Support
 
-Yes, you can!
+Chatbot gives mental health support
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+App drafts a police report
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Provide info for legal & medical help
+
+5. Auto-Safety Triggers
+
+When battery < 5% → auto-send location
+
+When offline/no internet → SMS instead
+
+6. Evidence Recording
+
+Audio recording
+
+Video recording
+
+GPS trail logging
+
+Save securely
+
+
+## Tech Stack
+Frontend: HTML5, CSS3, JavaScript
+
+Backend: Python (Flask) or Java (Spring Boot)
+
+Database: SQLite / MySQL
+
+AI/Services: Whisper, OpenAI GPT, Twilio, Google Maps
+
+Device APIs: Geolocation, MediaRecorder, Flashlight, Battery Status
+
+
+
