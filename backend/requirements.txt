@@ -1,6 +1,6 @@
 flask
 flask-cors
-openai
+groq
 openai-whisper
 twilio
 python-dotenv

@@ -50,7 +50,7 @@ def chat_route():
     return jsonify(result)
 
 #audio analysis routing
-@app.route("/analyze-audio",methods=["POST"])
+@app.route("/anal-audio",methods=["POST"])
 def analyze_aud_route():
     if "audio" not in request.files:
         return jsonify({"success":False,"error":"no audio file present"}),400

@@ -35,7 +35,7 @@ imp_words = [
 
 ]
 
-def anal_audio():
+def anal_audio(audio_file):
     temp_path = None
     
     try:
