@@ -4,7 +4,7 @@ An AI-powered women's safety app with real-time emergency response, multilingual
 
 **Features**
 
--1. 🆘 **SOS Button**
+1. 🆘 **SOS Button**
 
 Press and hold for 3 seconds to send emergency SMS with live location to all contacts
 Turn on flashlight
@@ -12,7 +12,7 @@ Trigger loud siren
 Start automatic voice recording
 Start camera recording (if possible)
 
-- 2. 🎙️ **Voice Distress Detection** — Whisper AI transcribes audio and detects distress keywords in 10+ Indian languages and foreign languages too.
+2. 🎙️ **Voice Distress Detection** — Whisper AI transcribes audio and detects distress keywords in 10+ Indian languages and foreign languages too.
 Continuously listen (if permission given)
 Detect keywords like:
 “Help”, “Bachao”, “Bacho”, “Save me”, “Mujhe bachao”
@@ -21,20 +21,20 @@ Hindi, Marathi, Bengali, Tamil, Telugu, Malayalam, Gujarati, Punjabi, Kannada, O
 When detected:
 Trigger SOS actions automatically
 
-- 3. 🔊 **Tone Analysis** — librosa analyzes pitch, energy and tempo to detect panic even without keywords
+3. 🔊 **Tone Analysis** — librosa analyzes pitch, energy and tempo to detect panic even without keywords
 
 
-- 4. 🤖 **Multilingual AI Chatbot** — Responds in the user's language with safety advice, legal guidance.
+4. 🤖 **Multilingual AI Chatbot** — Responds in the user's language with safety advice, legal guidance.
 
 Chatbot gives mental health support
 
 App drafts a police report
 
-- 5. 📍 **Live Location Sharing** — Google Maps link sent automatically with every SOS alert
+5. 📍 **Live Location Sharing** — Google Maps link sent automatically with every SOS alert
 
-- 6. 🔦 **Safety Tools** — Flashlight, siren, fake call, audio/video recording
+6. 🔦 **Safety Tools** — Flashlight, siren, fake call, audio/video recording
 
-- 7. **Auto-Safety Triggers**
+7. **Auto-Safety Triggers**
 
 When battery < 5% → auto-send location
 
