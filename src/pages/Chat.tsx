@@ -116,16 +116,17 @@ export default function Chat() {
         }
 
         // Call speech-to-text edge function
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('speech-to-text', {
-          body: {
-            audio: base64Audio
-          }
+        const formData = new FormData();
+        const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/webm' });
+        formData.append('audio', audioFile);
+
+        const response = await fetch('http://localhost:5000/anal-audio', {
+          method: 'POST',
+          body: formData
         });
-        if (error) throw error;
-        setInput(data.text);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error);
+        setInput(data.transcript);
         toast({
           title: 'Success',
           description: 'Voice transcribed! Review and send.'
@@ -148,6 +149,7 @@ export default function Chat() {
       }
     } = await supabase.auth.getUser();
     if (!user) return;
+    console.log("Sending message:", input)
     const userMessage = input;
     setInput('');
     setIsLoading(true);
@@ -171,15 +173,20 @@ export default function Chat() {
     }
     try {
       // Call AI companion edge function
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('ai-chat', {
-        body: {
-          message: userMessage
-        }
+      console.log("Calling Flask...") 
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          session_id: user.id
+        })
       });
-      if (error) throw error;
+      console.log("Response status:", response.status)
+      const data = await response.json();
+      console.log("Response data:", data)
+      
+      if (!data.success) throw new Error(data.error);
 
       // Save AI response
       await supabase.from('chat_messages').insert([{

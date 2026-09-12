@@ -1,153 +1,209 @@
 import { useState, useEffect, useRef } from "react";
-import { AlertCircle, Phone, PhoneCall, MapPin, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, MapPin, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
 export default function SOSButton() {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [isPressed, setIsPressed] = useState(false);
   const [pressTime, setPressTime] = useState(0);
-  const [location, setLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [location, setLocation] = useState<{lat: number; lng: number} | null>(null);
   const [lastActivity, setLastActivity] = useState<string>("");
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pressStartRef = useRef<number>(0);
+  const isSendingRef = useRef<boolean>(false);
+
   useEffect(() => {
     setLastActivity(new Date().toLocaleString());
-
-    // Get user's location
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(position => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-      }, error => {
-        console.error("Error getting location:", error);
-      });
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        () => {
+          setLocation({ lat: 28.6139, lng: 77.2090 });
+        }
+      );
+    } else {
+      setLocation({ lat: 28.6139, lng: 77.2090 });
     }
   }, []);
-  const handleSOSPress = async () => {
-    try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) return;
 
-      // Create SOS alert
-      const {
-        error
-      } = await supabase.from("sos_alerts").insert({
+  const handleSOSPress = async () => {
+    if (isSendingRef.current) return;
+    isSendingRef.current = true;
+
+    console.log("SOS triggered!", location);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "❌ Error",
+          description: "Please login first",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "🚨 SOS Activated!",
+        description: "Sending emergency alerts...",
+        variant: "destructive"
+      });
+
+      // Save to database
+      await supabase.from("sos_alerts").insert({
         user_id: user.id,
         latitude: location?.lat,
         longitude: location?.lng,
         trigger_type: "button",
         status: "active"
       });
-      if (error) throw error;
 
       // Get emergency contacts
-      const {
-        data: contacts
-      } = await supabase.from("emergency_contacts").select("*").eq("user_id", user.id);
-      if (contacts && contacts.length > 0 && location) {
-        // Send location to emergency contacts via SMS
-        const locationUrl = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
-        const message = `EMERGENCY! I need help. My current location: ${locationUrl}`;
+      const { data: contacts } = await supabase
+        .from("emergency_contacts")
+        .select("*")
+        .eq("user_id", user.id);
 
-        // Send SMS to each emergency contact
+      // Send SMS via Flask
+      if (contacts && contacts.length > 0) {
         for (const contact of contacts) {
-          try {
-            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-sos-alert`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-              },
-              body: JSON.stringify({
-                phone: contact.phone,
-                message: message,
-                contactName: contact.name
-              })
-            });
-          } catch (err) {
-            console.error("Error sending alert to contact:", err);
-          }
+          await fetch('http://localhost:5000/sos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lat: location?.lat || 28.6139,
+              lng: location?.lng || 77.2090,
+              contact: contact.phone
+            })
+          });
         }
-      }
-      toast({
-        title: "SOS Activated!",
-        description: `Emergency alert sent to ${contacts?.length || 0} contacts. Calling 112...`,
-        variant: "destructive"
-      });
 
-      // Automatically call 112
-      window.location.href = 'tel:112';
+        toast({
+          title: "✅ Alert Sent!",
+          description: `SMS sent to ${contacts.length} emergency contact(s)!`,
+        });
+      } else {
+        toast({
+          title: "⚠️ No Contacts",
+          description: "Please add emergency contacts first",
+          variant: "destructive"
+        });
+      }
+
+      // Call 112
+      setTimeout(() => {
+        window.location.href = 'tel:112';
+      }, 2000);
+
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      isSendingRef.current = false;
     }
   };
+
   const handlePressStart = () => {
+    if (timerRef.current) return;
+    console.log("Press started!");
     setIsPressed(true);
     pressStartRef.current = Date.now();
+
     timerRef.current = setInterval(() => {
-      const elapsed = Math.min((Date.now() - pressStartRef.current) / 1000, 3);
-      setPressTime(elapsed);
+      const elapsed = (Date.now() - pressStartRef.current) / 1000;
+      const capped = Math.min(elapsed, 3);
+      setPressTime(capped);
+
       if (elapsed >= 3) {
-        handlePressEnd();
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        setIsPressed(false);
+        setPressTime(0);
         handleSOSPress();
       }
     }, 50);
   };
+
   const handlePressEnd = () => {
-    setIsPressed(false);
-    setPressTime(0);
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    setIsPressed(false);
+    setPressTime(0);
   };
-  const progress = pressTime / 3 * 100;
-  return <div className="space-y-6">
+
+  const progress = (pressTime / 3) * 100;
+  const circumference = 2 * Math.PI * 45;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="space-y-6">
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse" style={{
-          transform: `scale(${1 + progress / 100})`,
-          opacity: progress / 100
-        }} />
+          {isPressed && (
+            <div
+              className="absolute inset-0 rounded-full bg-red-500/30 animate-ping"
+              style={{ animationDuration: '0.5s' }}
+            />
+          )}
 
-          <button onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onMouseLeave={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className="relative w-48 h-48 rounded-full bg-gradient-to-br from-destructive to-destructive/80 shadow-strong flex flex-col items-center justify-center transition-all duration-200 active:scale-95" style={{
-          boxShadow: isPressed ? "0 8px 40px hsl(var(--destructive) / 0.5)" : "0 8px 30px hsl(var(--destructive) / 0.2)"
-        }}>
+          <button
+            onMouseDown={handlePressStart}
+            onMouseUp={handlePressEnd}
+            onMouseLeave={handlePressEnd}
+            onTouchStart={handlePressStart}
+            onTouchEnd={handlePressEnd}
+            className="relative w-48 h-48 rounded-full bg-gradient-to-br from-red-600 to-red-400 flex flex-col items-center justify-center transition-all duration-200 active:scale-95 select-none"
+            style={{
+              boxShadow: isPressed
+                ? "0 8px 40px rgba(239, 68, 68, 0.7)"
+                : "0 8px 30px rgba(239, 68, 68, 0.3)"
+            }}
+          >
+            {isPressed && (
+              <svg
+                className="absolute inset-0 w-full h-full -rotate-90"
+                viewBox="0 0 100 100"
+              >
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="6"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.05s linear' }}
+                />
+              </svg>
+            )}
             <AlertCircle className="w-16 h-16 text-white mb-2" />
             <span className="text-2xl font-bold text-white">SOS</span>
-            <span className="text-sm text-white/90 mt-1">Press & Hold</span>
+            <span className="text-sm text-white/90 mt-1">
+              {isPressed ? `${(3 - pressTime).toFixed(1)}s` : "Press & Hold"}
+            </span>
           </button>
-
-          {isPressed && <div className="absolute inset-0 rounded-full border-8 border-white">
-              <svg className="w-full h-full -rotate-90">
-                <circle cx="50%" cy="50%" r="45%" fill="none" stroke="white" strokeWidth="8" strokeDasharray={`${progress * 3} 300`} className="transition-all duration-100" />
-              </svg>
-            </div>}
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground max-w-xs">
-          Press and hold for 3 seconds to send emergency alert to all your contacts
+          Press and hold for 3 seconds to send emergency alert
         </p>
       </div>
-
-      
 
       <Card className="p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm">
@@ -155,16 +211,16 @@ export default function SOSButton() {
           <span className="text-muted-foreground">Current Location</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          {location ? `Getting location... (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})` : "Getting location..."}
+          {location
+            ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+            : "Getting location..."}
         </p>
-
         <div className="flex items-center gap-2 text-sm pt-2 border-t">
           <Clock className="w-4 h-4 text-primary" />
           <span className="text-muted-foreground">Last Activity</span>
         </div>
         <p className="text-xs text-muted-foreground">{lastActivity}</p>
       </Card>
-
-      
-    </div>;
+    </div>
+  );
 }

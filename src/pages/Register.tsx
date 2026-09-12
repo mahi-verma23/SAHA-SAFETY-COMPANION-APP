@@ -71,7 +71,7 @@ export default function Register() {
       if (!user) throw new Error("No user found");
 
       // Create profile
-      const { error: profileError } = await supabase.from("profiles").insert({
+      const { error: profileError } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: fullName,
         phone_number: phoneNumber,

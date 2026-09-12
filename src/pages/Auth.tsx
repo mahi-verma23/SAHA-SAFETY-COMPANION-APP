@@ -30,18 +30,26 @@ export default function Auth() {
           });
           return;
         }
-        const {
-          error
-        } = await supabase.auth.signUp({
-          email,
-          password
-        });
-        if (error) throw error;
+        const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      if (error) throw error;
+
+      if (data.session) {
         toast({
           title: "Account created!",
           description: "Please complete your profile setup"
         });
         navigate("/register");
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        if (signInError) throw signInError;
+        navigate("/register");
+      }
       } else {
         const {
           error
