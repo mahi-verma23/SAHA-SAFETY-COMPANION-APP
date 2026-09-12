@@ -74,7 +74,7 @@ export default function SOSButton() {
       // Send SMS via Flask
       if (contacts && contacts.length > 0) {
         for (const contact of contacts) {
-          await fetch('http://localhost:5000/sos', {
+          await fetch('${import.meta.env.VITE_BACKEND_URL}/sos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

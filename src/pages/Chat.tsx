@@ -120,7 +120,7 @@ export default function Chat() {
         const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/webm' });
         formData.append('audio', audioFile);
 
-        const response = await fetch('http://localhost:5000/anal-audio', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/anal-audio`, {
           method: 'POST',
           body: formData
         });
@@ -174,7 +174,7 @@ export default function Chat() {
     try {
       // Call AI companion edge function
       console.log("Calling Flask...") 
-      const response = await fetch('http://localhost:5000/chat', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
