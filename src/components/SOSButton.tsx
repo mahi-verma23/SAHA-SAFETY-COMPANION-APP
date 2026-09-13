@@ -18,6 +18,24 @@ export default function SOSButton({ autoTrigger, onAutoTriggerDone }: SOSButtonP
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pressStartRef = useRef<number>(0);
   const isSendingRef = useRef<boolean>(false);
+  const [locationName, setLocationName] = useState<string>("Getting location...");
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      if (data.display_name) {
+        const parts = data.display_name.split(',');
+        const shortAddress = parts.slice(0, 3).join(',');
+        setLocationName(shortAddress);
+      }
+    } catch (err) {
+      setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    }
+  };
+
 
   useEffect(() => {
     setLastActivity(new Date().toLocaleString());
@@ -25,7 +43,10 @@ export default function SOSButton({ autoTrigger, onAutoTriggerDone }: SOSButtonP
     // Load last known location immediately
     const saved = localStorage.getItem('saha_last_location');
     if (saved) {
-      setLocation(JSON.parse(saved));
+      const loc = JSON.parse(saved);
+      setLocation(loc);
+      reverseGeocode(loc.lat, loc.lng);
+
     }
 
     // Try to get fresh location
@@ -39,6 +60,7 @@ export default function SOSButton({ autoTrigger, onAutoTriggerDone }: SOSButtonP
           setLocation(loc);
           // Save fresh location to storage
           localStorage.setItem('saha_last_location', JSON.stringify(loc));
+          reverseGeocode(loc.lat, loc.lng);
         },
         error => {
           console.error("Location error:", error);
@@ -243,9 +265,7 @@ export default function SOSButton({ autoTrigger, onAutoTriggerDone }: SOSButtonP
           <span className="text-muted-foreground">Current Location</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          {location
-            ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
-            : "Getting location..."}
+          {locationName}
         </p>
         <div className="flex items-center gap-2 text-sm pt-2 border-t">
           <Clock className="w-4 h-4 text-primary" />
