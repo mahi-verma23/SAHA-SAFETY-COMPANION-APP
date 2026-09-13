@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { toast } from 'sonner';
 
+
 interface SafetyToolsPanelProps {
   onStartFakeCall: () => void;
 }
@@ -23,6 +24,10 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const flashStreamRef = useRef<MediaStream | null>(null);
+  const flashBlinkRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -35,6 +40,11 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (flashBlinkRef.current) {
+        clearInterval(flashBlinkRef.current);
+      }
+      const overlay = document.getElementById('saha-flash-overlay');
+      if (overlay) overlay.remove();
     };
   }, []);
 
@@ -190,6 +200,95 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
     }
   };
 
+  const toggleFlashlight = async () => {
+  if (isFlashlightOn) {
+    // Turn off
+    if (flashBlinkRef.current) {
+      clearInterval(flashBlinkRef.current);
+      flashBlinkRef.current = null;
+    }
+    if (flashStreamRef.current) {
+      const track = flashStreamRef.current.getVideoTracks()[0];
+      try {
+        await track.applyConstraints({
+          advanced: [{ torch: false }] as any
+        });
+      } catch(err) {
+        console.error(err);
+      }
+      flashStreamRef.current.getTracks().forEach(t => t.stop());
+      flashStreamRef.current = null;
+    }
+    // Remove white screen if exists
+    const overlay = document.getElementById('saha-flash-overlay');
+    if (overlay) overlay.remove();
+    
+    setIsFlashlightOn(false);
+    toast.success('Flashlight off');
+    return;
+  }
+
+  // Turn on with blinking
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    const track = stream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities() as any;
+
+    if (capabilities.torch) {
+      // Real torch — blink it
+      flashStreamRef.current = stream;
+      let torchOn = false;
+      flashBlinkRef.current = setInterval(async () => {
+        torchOn = !torchOn;
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: torchOn }] as any
+          });
+        } catch(err) {
+          console.error(err);
+        }
+      }, 500);
+      setIsFlashlightOn(true);
+      toast.success('Flashlight blinking');
+    } else {
+      // No torch — use white screen overlay blinking
+      stream.getTracks().forEach(t => t.stop());
+      startWhiteScreenBlink();
+      setIsFlashlightOn(true);
+      toast.success('Screen light activated');
+    }
+  } catch {
+    // Camera denied — use white screen
+    startWhiteScreenBlink();
+    setIsFlashlightOn(true);
+    toast.success('Screen light activated');
+  }
+};
+
+const startWhiteScreenBlink = () => {
+  let visible = false;
+  
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'saha-flash-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: white;
+    z-index: 99999;
+    pointer-events: none;
+    display: none;
+  `;
+  document.body.appendChild(overlay);
+
+  flashBlinkRef.current = setInterval(() => {
+    visible = !visible;
+    overlay.style.display = visible ? 'block' : 'none';
+  }, 500);
+};
 
   return (
     <div className="space-y-4">
@@ -257,6 +356,26 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
           {isSirenActive ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
           <span className="text-sm">
             {isSirenActive ? 'Stop Siren' : 'Emergency Siren'}
+          </span>
+        </div>
+      </Button>
+
+      {/* Flashlight */}
+      <Button
+        onClick={toggleFlashlight}
+        className={`w-full h-24 rounded-2xl text-white ${
+          isFlashlightOn
+            ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 animate-pulse'
+            : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800'
+        }`}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-2xl">🔦</span>
+          <span className="text-sm font-medium">
+            {isFlashlightOn ? 'Stop Flashlight' : 'Emergency Flashlight'}
+          </span>
+          <span className="text-xs opacity-80">
+            {isFlashlightOn ? 'Blinking...' : 'Blinks for emergency signal'}
           </span>
         </div>
       </Button>

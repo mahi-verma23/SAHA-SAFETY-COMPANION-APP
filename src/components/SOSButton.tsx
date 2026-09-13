@@ -4,7 +4,12 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export default function SOSButton() {
+interface SOSButtonProps {
+  autoTrigger?: boolean;
+  onAutoTriggerDone?: () => void;
+}
+
+export default function SOSButton({ autoTrigger, onAutoTriggerDone }: SOSButtonProps) {
   const { toast } = useToast();
   const [isPressed, setIsPressed] = useState(false);
   const [pressTime, setPressTime] = useState(0);
@@ -16,22 +21,49 @@ export default function SOSButton() {
 
   useEffect(() => {
     setLastActivity(new Date().toLocaleString());
+
+    // Load last known location immediately
+    const saved = localStorage.getItem('saha_last_location');
+    if (saved) {
+      setLocation(JSON.parse(saved));
+    }
+
+    // Try to get fresh location
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         position => {
-          setLocation({
+          const loc = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          setLocation(loc);
+          // Save fresh location to storage
+          localStorage.setItem('saha_last_location', JSON.stringify(loc));
         },
-        () => {
-          setLocation({ lat: 28.6139, lng: 77.2090 });
+        error => {
+          console.error("Location error:", error);
+          if (!saved) {
+            // No last known location available
+            toast({
+              title: "⚠️ Location unavailable",
+              description: "Enable GPS for accurate location sharing"
+            });
+          } else {
+            toast({
+              title: "⚠️ Using last known location",
+              description: "Enable GPS for real-time location"
+            });
+          }
         }
       );
-    } else {
-      setLocation({ lat: 28.6139, lng: 77.2090 });
     }
   }, []);
+    useEffect(() => {
+      if (autoTrigger) {
+        handleSOSPress();
+        onAutoTriggerDone?.();
+      }
+    }, [autoTrigger]);
 
   const handleSOSPress = async () => {
     if (isSendingRef.current) return;
@@ -74,7 +106,7 @@ export default function SOSButton() {
       // Send SMS via Flask
       if (contacts && contacts.length > 0) {
         for (const contact of contacts) {
-          await fetch('${import.meta.env.VITE_BACKEND_URL}/sos', {
+          await fetch(`${import.meta.env.VITE_BACKEND_URL}/sos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
