@@ -5,13 +5,53 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BottomNav from "@/components/BottomNav";
 import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
+
+interface Recording {
+  id: string;
+  type: 'audio' | 'video';
+  url: string;
+  timestamp: Date;
+  size: number;
+}
 
 export default function Evidence() {
   const { toast } = useToast();
-  const [audioFiles, setAudioFiles] = useState<any[]>([]);
-  const [videoFiles, setVideoFiles] = useState<any[]>([]);
+  const [audioFiles, setAudioFiles] = useState<Recording[]>([]);
+  const [videoFiles, setVideoFiles] = useState<Recording[]>([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
+    const audio = saved.filter((r: Recording) => r.type === 'audio');
+    const video = saved.filter((r: Recording) => r.type === 'video');
+    setAudioFiles(audio);
+    setVideoFiles(video);
+
+    const handleNewRecording = (event: CustomEvent) => {
+      const recording = event.detail as Recording;
+      if (recording.type === 'audio') {
+        setAudioFiles(prev => [...prev, recording]);
+      } else {
+        setVideoFiles(prev => [...prev, recording]);
+      }
+    };
+
+    window.addEventListener('newRecording', handleNewRecording as EventListener);
+    return () => {
+      window.removeEventListener('newRecording', handleNewRecording as EventListener);
+    };
+  }, []);
 
   const handleDelete = (type: "audio" | "video", id: string) => {
+    const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
+    const updated = existing.filter((r: Recording) => r.id !== id);
+    localStorage.setItem('saha_recordings', JSON.stringify(updated));
+
+    if (type === 'audio') {
+      setAudioFiles(prev => prev.filter(f => f.id !== id));
+    } else {
+      setVideoFiles(prev => prev.filter(f => f.id !== id));
+    }
     toast({
       title: "File deleted",
       description: "Recording has been removed",
@@ -59,33 +99,76 @@ export default function Evidence() {
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all">All (0)</TabsTrigger>
-            <TabsTrigger value="audio">Audio (0)</TabsTrigger>
-            <TabsTrigger value="video">Video (0)</TabsTrigger>
+            <TabsTrigger value="all">All ({audioFiles.length + videoFiles.length})</TabsTrigger>
+            <TabsTrigger value="audio">Audio ({audioFiles.length})</TabsTrigger>
+            <TabsTrigger value="video">Video ({videoFiles.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-3 mt-4">
-            <EmptyState
-              icon={<FileAudio className="w-12 h-12 text-muted-foreground" />}
-              title="No recordings yet"
-              description="Start recording from Tools tab"
-            />
+            {audioFiles.length === 0 && videoFiles.length === 0 ? (
+              <EmptyState
+                icon={<FileAudio className="w-12 h-12 text-muted-foreground" />}
+                title="No recordings yet"
+                description="Start recording from Tools tab"
+              />
+            ) : (
+              <>
+                {audioFiles.map(file => (
+                  <Card key={file.id} className="p-4">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      🎙️ Audio — {new Date(file.timestamp).toLocaleString()}
+                    </p>
+                    <audio src={file.url} controls className="w-full" />
+                  </Card>
+                ))}
+                {videoFiles.map(file => (
+                  <Card key={file.id} className="p-4">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      📹 Video — {new Date(file.timestamp).toLocaleString()}
+                    </p>
+                    <video src={file.url} controls className="w-full rounded-lg" />
+                  </Card>
+                ))}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="audio" className="space-y-3 mt-4">
-            <EmptyState
-              icon={<FileAudio className="w-12 h-12 text-muted-foreground" />}
-              title="No audio files"
-              description="Use Voice Record to create audio evidence"
-            />
+            {audioFiles.length === 0 ? (
+              <EmptyState
+                icon={<FileAudio className="w-12 h-12 text-muted-foreground" />}
+                title="No audio files"
+                description="Use Voice Record to create audio evidence"
+              />
+            ) : (
+              audioFiles.map(file => (
+                <Card key={file.id} className="p-4">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    🎙️ {new Date(file.timestamp).toLocaleString()}
+                  </p>
+                  <audio src={file.url} controls className="w-full" />
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="video" className="space-y-3 mt-4">
-            <EmptyState
-              icon={<FileVideo className="w-12 h-12 text-muted-foreground" />}
-              title="No video files"
-              description="Use Video Record to create video evidence"
-            />
+            {videoFiles.length === 0 ? (
+              <EmptyState
+                icon={<FileVideo className="w-12 h-12 text-muted-foreground" />}
+                title="No video files"
+                description="Use Video Record to create video evidence"
+              />
+            ) : (
+              videoFiles.map(file => (
+                <Card key={file.id} className="p-4">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    📹 {new Date(file.timestamp).toLocaleString()}
+                  </p>
+                  <video src={file.url} controls className="w-full rounded-lg" />
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
 

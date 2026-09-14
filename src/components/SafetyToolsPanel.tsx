@@ -79,6 +79,11 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
             timestamp: new Date(),
             size: audioBlob.size,
           };
+
+          // Save to localStorage
+          const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
+          existing.push(recording);
+          localStorage.setItem('saha_recordings', JSON.stringify(existing));
           
           window.dispatchEvent(new CustomEvent('newRecording', { detail: recording }));
           stream.getTracks().forEach(track => track.stop());
@@ -115,7 +120,6 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
             videoChunksRef.current.push(event.data);
           }
         };
-
         mediaRecorder.onstop = () => {
           const videoBlob = new Blob(videoChunksRef.current, { type: 'video/webm' });
           const url = URL.createObjectURL(videoBlob);
@@ -128,10 +132,16 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
             timestamp: new Date(),
             size: videoBlob.size,
           };
-          
+
+          // Save to localStorage
+          const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
+          existing.push(recording);
+          localStorage.setItem('saha_recordings', JSON.stringify(existing));
+
           window.dispatchEvent(new CustomEvent('newRecording', { detail: recording }));
           stream.getTracks().forEach(track => track.stop());
         };
+        
 
         mediaRecorder.start();
         setIsRecordingVideo(true);
