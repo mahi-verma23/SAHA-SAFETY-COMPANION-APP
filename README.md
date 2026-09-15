@@ -6,8 +6,8 @@ An AI-powered women's safety app with real-time emergency response, multilingual
 
 1. 🆘 **SOS Button**
 
--Press and hold for 3 seconds to send emergency SMS with live location to all contacts
--Turn on flashlight
+- Press and hold for 3 seconds to send emergency SMS with live location to all contacts
+- Turn on flashlight
 -Trigger loud siren
 -Start automatic voice recording
 -Start camera recording (if possible)
