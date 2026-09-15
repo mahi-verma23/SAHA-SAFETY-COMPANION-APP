@@ -6,11 +6,11 @@ An AI-powered women's safety app with real-time emergency response, multilingual
 
 1. 🆘 **SOS Button**
 
-Press and hold for 3 seconds to send emergency SMS with live location to all contacts
-Turn on flashlight
-Trigger loud siren
-Start automatic voice recording
-Start camera recording (if possible)
+-Press and hold for 3 seconds to send emergency SMS with live location to all contacts
+-Turn on flashlight
+-Trigger loud siren
+-Start automatic voice recording
+-Start camera recording (if possible)
 
 2. 🎙️ **Voice Distress Detection** — Whisper AI transcribes audio and detects distress keywords in 10+ Indian languages and foreign languages too.
 Continuously listen (if permission given)
@@ -41,15 +41,20 @@ When battery < 5% → auto-send location
 When offline/no internet → SMS instead
 
 ## Tech Stack
-Frontend: HTML5, CSS3, JavaScript
+**Frontend:** HTML5, CSS3, JavaScript
 
-Backend: Python (Flask) 
+**Backend:** Python (Flask) 
 
-Database:  Supabase (auth + data storage)
+**Database:** Supabase (auth + data storage)
 
-AI/Services: Whisper, Twilio, Google Maps,Groq LLM (multilingual chatbot),librosa (tone analysis)
+**AI/Services:** Whisper, Twilio, Google Maps,Groq LLM (multilingual chatbot),librosa (tone analysis)
 
-Device APIs: Geolocation, MediaRecorder, Flashlight, Battery Status, Geolocation, Haptics
+**Device APIs:** Geolocation, MediaRecorder, Flashlight, Battery Status, Geolocation, Haptics
+
+## Demo
+
+- **App:** https://saha-safety-companion-app.vercel.app
+- **Backend API:** https://saha-safety-companion-app.onrender.com
 
 ## Built With ❤️ for Women's Safety
 
