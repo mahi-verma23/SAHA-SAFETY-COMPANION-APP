@@ -67,27 +67,32 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
           }
         };
 
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const url = URL.createObjectURL(audioBlob);
-          setAudioUrl(url);
-          
-          const recording = {
-            id: Date.now().toString(),
-            type: 'audio' as const,
-            url: url,
-            timestamp: new Date(),
-            size: audioBlob.size,
-          };
+  mediaRecorder.onstop = () => {
+    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+    const url = URL.createObjectURL(audioBlob);
+    setAudioUrl(url);
 
-          // Save to localStorage
-          const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
-          existing.push(recording);
-          localStorage.setItem('saha_recordings', JSON.stringify(existing));
-          
-          window.dispatchEvent(new CustomEvent('newRecording', { detail: recording }));
-          stream.getTracks().forEach(track => track.stop());
-        };
+    // Convert to base64 for persistent storage
+    const reader = new FileReader();
+    reader.readAsDataURL(audioBlob);
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      const recording = {
+        id: Date.now().toString(),
+        type: 'audio' as const,
+        url: base64, // store base64 instead of blob URL
+        timestamp: new Date(),
+        size: audioBlob.size,
+      };
+
+      const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
+      existing.push(recording);
+      localStorage.setItem('saha_recordings', JSON.stringify(existing));
+      window.dispatchEvent(new CustomEvent('newRecording', { detail: recording }));
+    };
+
+    stream.getTracks().forEach(track => track.stop());
+  };
 
         mediaRecorder.start();
         setIsRecordingAudio(true);
@@ -124,24 +129,28 @@ export function SafetyToolsPanel({ onStartFakeCall }: SafetyToolsPanelProps) {
           const videoBlob = new Blob(videoChunksRef.current, { type: 'video/webm' });
           const url = URL.createObjectURL(videoBlob);
           setVideoUrl(url);
-          
-          const recording = {
-            id: Date.now().toString(),
-            type: 'video' as const,
-            url: url,
-            timestamp: new Date(),
-            size: videoBlob.size,
+
+          // Convert to base64 for persistent storage
+          const reader = new FileReader();
+          reader.readAsDataURL(videoBlob);
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            const recording = {
+              id: Date.now().toString(),
+              type: 'video' as const,
+              url: base64, // store base64 instead of blob URL
+              timestamp: new Date(),
+              size: videoBlob.size,
+            };
+
+            const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
+            existing.push(recording);
+            localStorage.setItem('saha_recordings', JSON.stringify(existing));
+            window.dispatchEvent(new CustomEvent('newRecording', { detail: recording }));
           };
 
-          // Save to localStorage
-          const existing = JSON.parse(localStorage.getItem('saha_recordings') || '[]');
-          existing.push(recording);
-          localStorage.setItem('saha_recordings', JSON.stringify(existing));
-
-          window.dispatchEvent(new CustomEvent('newRecording', { detail: recording }));
           stream.getTracks().forEach(track => track.stop());
         };
-        
 
         mediaRecorder.start();
         setIsRecordingVideo(true);
