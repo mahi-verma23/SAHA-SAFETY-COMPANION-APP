@@ -25,6 +25,13 @@ export default function Chat() {
   } = useToast();
   useEffect(() => {
     fetchMessages();
+    // Ping backend every 14 minutes to prevent cold start
+    const warmup = setInterval(() => {
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/health`)
+        .catch(() => {}); // silently fail
+    }, 14 * 60 * 1000);
+
+    return () => clearInterval(warmup);
   }, []);
   useEffect(() => {
     scrollToBottom();
@@ -35,6 +42,7 @@ export default function Chat() {
     });
   };
   const fetchMessages = async () => {
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/health`).catch(() => {});
     const {
       data,
       error
