@@ -88,7 +88,7 @@ def chat_resp(message,session_id="default"):
         recent = conv_history[session_id][-10:]
 
         response = client.chat.completions.create(
-            model="meta-llama/llama-4-maverick-17b-128e-instruct",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role":"system","content" : PROMPT},*recent
             ],max_tokens=200,temperature=0.7
