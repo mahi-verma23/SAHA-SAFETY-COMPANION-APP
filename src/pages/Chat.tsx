@@ -190,7 +190,7 @@ export default function Chat() {
         body: JSON.stringify({
           message: userMessage,
           session_id: user.id
-        })
+        }),
         signal: controller.signal
       });
       clearTimeout(timeoutId);
