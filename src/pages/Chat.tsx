@@ -182,6 +182,8 @@ export default function Chat() {
     try {
       // Call AI companion edge function
       console.log("Calling Flask...") 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -189,7 +191,10 @@ export default function Chat() {
           message: userMessage,
           session_id: user.id
         })
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       console.log("Response status:", response.status)
       const data = await response.json();
       console.log("Response data:", data)
@@ -200,18 +205,25 @@ export default function Chat() {
       await supabase.from('chat_messages').insert([{
         user_id: user.id,
         role: 'assistant',
-        content: data.response,
-        emotion: data.sentiment
+        content: data.response
       }]);
       fetchMessages();
     } catch (error) {
       console.error('Error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to get response from AI companion',
-        variant: 'destructive'
-      });
-    } finally {
+      if (error.name === 'AbortError') {
+        toast({
+          title: 'Server is waking up...',
+          description: 'Please try again in 30 seconds — server was sleeping!',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to get response from AI companion',
+          variant: 'destructive'
+        });
+    } }
+    finally {
       setIsLoading(false);
     }
   };
