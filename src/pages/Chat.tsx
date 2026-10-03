@@ -162,23 +162,23 @@ export default function Chat() {
     setInput('');
     setIsLoading(true);
 
-    // Save user message
-    const {
-      error: userError
-    } = await supabase.from('chat_messages').insert([{
-      user_id: user.id,
-      role: 'user',
-      content: userMessage
-    }]);
-    if (userError) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send message',
-        variant: 'destructive'
-      });
-      setIsLoading(false);
-      return;
-    }
+    // Add user message to UI immediately
+  const userMsg: Message = {
+    id: Date.now().toString(),
+    role: 'user',
+    content: userMessage,
+    created_at: new Date().toISOString()
+  };
+  setMessages(prev => [...prev, userMsg]);
+
+  // Save to Supabase in background
+  supabase.from('chat_messages').insert([{
+    user_id: user.id,
+    role: 'user',
+    content: userMessage
+  }]).then(() => {});
+
+  
     try {
       // Call AI companion edge function
       console.log("Calling Flask...") 
@@ -201,19 +201,28 @@ export default function Chat() {
       
       if (!data.success) throw new Error(data.error);
 
-      // Save AI response
-      await supabase.from('chat_messages').insert([{
+       // Add AI response to UI immediately
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.response,
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, aiMsg]);
+
+      // Save to Supabase in background
+      supabase.from('chat_messages').insert([{
         user_id: user.id,
         role: 'assistant',
         content: data.response
-      }]);
-      fetchMessages();
-    } catch (error) {
+      }]).then(() => {});
+
+    } catch (error: any) {
       console.error('Error:', error);
       if (error.name === 'AbortError') {
         toast({
           title: 'Server is waking up...',
-          description: 'Please try again in 30 seconds — server was sleeping!',
+          description: 'Please try again in 30 seconds!',
           variant: 'destructive'
         });
       } else {
@@ -222,8 +231,8 @@ export default function Chat() {
           description: 'Failed to get response from AI companion',
           variant: 'destructive'
         });
-    } }
-    finally {
+      }
+    } finally {
       setIsLoading(false);
     }
   };
