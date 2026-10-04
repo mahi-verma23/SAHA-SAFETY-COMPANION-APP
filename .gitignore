@@ -26,3 +26,5 @@ dist-ssr
 keys.txt
 __pycache__/
 *.pyc
+.vercel
+.env*

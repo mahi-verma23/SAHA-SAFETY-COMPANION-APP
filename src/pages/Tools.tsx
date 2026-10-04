@@ -50,47 +50,27 @@ export default function Tools() {
     };
 
     // Indian phone ringtone pattern
-    const ring = () => {
-      playTone(800, 0, 0.15);
-      playTone(640, 0.2, 0.15);
-      playTone(800, 0.4, 0.15);
-      playTone(640, 0.6, 0.15);
+    const ringtoneAudioRef = useRef<HTMLAudioElement | null>(null);
+
+    const playRingtone = () => {
+      const audio = new Audio('/whatsapp_ringtone.mp3');
+      audio.loop = true;
+      audio.volume = 0.8;
+      ringtoneAudioRef.current = audio;
+      audio.play().catch(err => console.error('Ringtone error:', err));
+      
+      if (navigator.vibrate) {
+        navigator.vibrate([1000, 500, 1000, 500, 1000]);
+      }
     };
-
-    ring();
-    ringtoneRef.current = setInterval(() => {
-      const ctx = new AudioContext();
-      audioContextRef.current = ctx;
-      const r = () => {
-        [0, 0.2, 0.4, 0.6].forEach((t, i) => {
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.connect(g);
-          g.connect(ctx.destination);
-          o.frequency.value = i % 2 === 0 ? 800 : 640;
-          o.type = 'sine';
-          g.gain.setValueAtTime(0, ctx.currentTime + t);
-          g.gain.linearRampToValueAtTime(0.3, ctx.currentTime + t + 0.01);
-          g.gain.linearRampToValueAtTime(0, ctx.currentTime + t + 0.15);
-          o.start(ctx.currentTime + t);
-          o.stop(ctx.currentTime + t + 0.3);
-        });
-      };
-      r();
-    }, 2000);
-  };
-
-  const stopRingtone = () => {
-    if (ringtoneRef.current) {
-      clearInterval(ringtoneRef.current);
-      ringtoneRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-  };
-
+  
+    const stopRingtone = () => {
+      if (ringtoneAudioRef.current) {
+        ringtoneAudioRef.current.pause();
+        ringtoneAudioRef.current.currentTime = 0;
+        ringtoneAudioRef.current = null;
+      }
+    };
   const handleStartFakeCall = () => {
     setShowFakeCall(true);
     setCallAccepted(false);
@@ -159,7 +139,7 @@ export default function Tools() {
     }
     toast.success("Audio deleted");
   };
-
+  }
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary to-background p-4 pb-24">
       <div className="max-w-md mx-auto space-y-4">

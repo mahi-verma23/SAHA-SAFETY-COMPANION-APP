@@ -42,22 +42,24 @@ export default function Chat() {
     });
   };
   const fetchMessages = async () => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/health`).catch(() => {});
-    const {
-      data,
-      error
-    } = await supabase.from('chat_messages').select('*').order('created_at', {
-      ascending: true
-    }).limit(50);
-    if (error) {
-      console.error('Error fetching messages:', error);
-      return;
-    }
-    setMessages((data || []).map(msg => ({
+  fetch(`${import.meta.env.VITE_BACKEND_URL}/health`).catch(() => {});
+  const { data, error } = await supabase.from('chat_messages').select('*').order('created_at', {
+    ascending: true
+  }).limit(50);
+  
+  console.log("Fetched messages:", data, "Error:", error);
+  
+  if (error) {
+    console.error('Error fetching messages:', error);
+    return;
+  }
+  if (data && data.length > 0) {
+    setMessages(data.map(msg => ({
       ...msg,
       role: msg.role as 'user' | 'assistant'
     })));
-  };
+  }
+};
   const startVoiceRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({

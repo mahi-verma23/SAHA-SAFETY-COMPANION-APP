@@ -5,14 +5,20 @@ import os
 
 load_dotenv()
 
+try:
+    from voice_detect import anal_audio
+    WHISPER_AVAILABLE = True
+except Exception as e:
+    print(f"Whisper not available: {e}")
+    WHISPER_AVAILABLE = False
+
 from voice_detect import anal_audio
 from chatbot import chat_resp
 from smsalert import send_sos
 
 
 app = Flask(__name__)
-CORS(app)
-
+CORS(app, origins=["https://saha-safety-companion-app.vercel.app", "http://localhost:8080", "http://localhost:5173"])
 @app.route("/health",methods=["GET"])
 def health():
     return jsonify({"status":"SAHA BACKEND IS RUNNING!"})
@@ -20,7 +26,7 @@ def health():
 
 @app.route("/sos", methods=["POST"])
 def sos_route():
-    data= request.get_json()
+    data = request.get_json()
 
     if not data:
         return jsonify({"success":False, "error":"No data provided"}),400
@@ -52,6 +58,9 @@ def chat_route():
 #audio analysis routing
 @app.route("/anal-audio",methods=["POST"])
 def analyze_aud_route():
+    if not WHISPER_AVAILABLE:
+        return jsonify({"success": False, "error": "Voice detection not available"}), 503
+    
     if "audio" not in request.files:
         return jsonify({"success":False,"error":"no audio file present"}),400
     
