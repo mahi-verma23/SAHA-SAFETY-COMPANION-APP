@@ -12,7 +12,6 @@ except Exception as e:
     print(f"Whisper not available: {e}")
     WHISPER_AVAILABLE = False
 
-from voice_detect import anal_audio
 from chatbot import chat_resp
 from smsalert import send_sos
 
@@ -33,7 +32,7 @@ def sos_route():
     
     lat = data.get("lat","Unknown")
     lng = data.get("lng","Unknown")
-    contact_number = data.get("contact") or os.getenv("EMERGENY_CONTACT")
+    contact_number = data.get("contact") or os.getenv("EMERGENCY_CONTACT")
 
     if not contact_number:
         return jsonify({"success":False, "error":"No emergency contact"})
