@@ -72,6 +72,12 @@ def analyze_aud_route():
     result = anal_audio(audio_file)
     return jsonify(result)
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'https://saha-safety-companion-app.vercel.app')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

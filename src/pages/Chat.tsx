@@ -135,7 +135,14 @@ export default function Chat() {
           body: formData
         });
         const data = await response.json();
-        if (!data.success) throw new Error(data.error);
+        if (!data.success) {
+          toast({
+            title: '⚠️ Voice processing slow',
+            description: 'Whisper is loading, try again in 30 seconds',
+            variant: 'destructive'
+          });
+          return;
+        }
         setInput(data.transcript);
         toast({
           title: 'Success',
