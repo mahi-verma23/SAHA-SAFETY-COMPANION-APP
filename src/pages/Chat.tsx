@@ -45,7 +45,7 @@ export default function Chat() {
   fetch(`${import.meta.env.VITE_BACKEND_URL}/health`).catch(() => {});
   const { data, error } = await supabase.from('chat_messages').select('*').order('created_at', {
     ascending: true
-  }).limit(50);
+  });
   
   console.log("Fetched messages:", data, "Error:", error);
   
