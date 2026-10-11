@@ -3,7 +3,6 @@ import { SafetyToolsPanel } from "@/components/SafetyToolsPanel";
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Phone, PhoneOff, Upload, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
@@ -19,72 +18,79 @@ export default function Tools() {
   const [callerName, setCallerName] = useState("Mom");
   const [fakeAudios, setFakeAudios] = useState<FakeAudio[]>([]);
   const [selectedAudio, setSelectedAudio] = useState<FakeAudio | null>(null);
-  const ringtoneRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const ringtoneAudioRef = useRef<HTMLAudioElement | null>(null);
   const callAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const ringtoneIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load saved fake audios from localStorage
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('saha_fake_audios') || '[]');
     setFakeAudios(saved);
     if (saved.length > 0) setSelectedAudio(saved[0]);
   }, []);
 
-  // Realistic ringtone using Web Audio API
   const playRingtone = () => {
-    const audioContext = new AudioContext();
-    audioContextRef.current = audioContext;
-
-    const playTone = (freq: number, start: number, duration: number) => {
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0, audioContext.currentTime + start);
-      gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + start + 0.01);
-      gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + start + duration);
-      osc.start(audioContext.currentTime + start);
-      osc.stop(audioContext.currentTime + start + duration + 0.1);
-    };
-
-    // Indian phone ringtone pattern
-    const ringtoneAudioRef = useRef<HTMLAudioElement | null>(null);
-
-    const playRingtone = () => {
-      const audio = new Audio('/whatsapp_ringtone.mp3');
-      audio.loop = true;
-      audio.volume = 0.8;
-      ringtoneAudioRef.current = audio;
-      audio.play().catch(err => console.error('Ringtone error:', err));
+    // Try real audio file first
+    const audio = new Audio('/ringtone.mp3');
+    audio.loop = true;
+    audio.volume = 0.8;
+    ringtoneAudioRef.current = audio;
+    
+    audio.play().catch(() => {
+      // Fallback to Web Audio API if file not found
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
       
-      if (navigator.vibrate) {
-        navigator.vibrate([1000, 500, 1000, 500, 1000]);
-      }
-    };
-  
-    const stopRingtone = () => {
-      if (ringtoneAudioRef.current) {
-        ringtoneAudioRef.current.pause();
-        ringtoneAudioRef.current.currentTime = 0;
-        ringtoneAudioRef.current = null;
-      }
-    };
-  const handleStartFakeCall = () => {
-    setShowFakeCall(true);
-    setCallAccepted(false);
-    playRingtone();
+      const ring = () => {
+        [0, 0.2, 0.4, 0.6].forEach((t, i) => {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
+          osc.frequency.value = i % 2 === 0 ? 800 : 640;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0, audioContext.currentTime + t);
+          gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + t + 0.01);
+          gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + t + 0.15);
+          osc.start(audioContext.currentTime + t);
+          osc.stop(audioContext.currentTime + t + 0.3);
+        });
+      };
+      
+      ring();
+      ringtoneIntervalRef.current = setInterval(ring, 2000);
+    });
+
     if (navigator.vibrate) {
       navigator.vibrate([1000, 500, 1000, 500, 1000]);
     }
   };
 
+  const stopRingtone = () => {
+    if (ringtoneAudioRef.current) {
+      ringtoneAudioRef.current.pause();
+      ringtoneAudioRef.current.currentTime = 0;
+      ringtoneAudioRef.current = null;
+    }
+    if (ringtoneIntervalRef.current) {
+      clearInterval(ringtoneIntervalRef.current);
+      ringtoneIntervalRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+  };
+
+  const handleStartFakeCall = () => {
+    setShowFakeCall(true);
+    setCallAccepted(false);
+    playRingtone();
+  };
+
   const handleAcceptCall = () => {
     stopRingtone();
     setCallAccepted(true);
-
-    // Play uploaded audio conversation
     if (selectedAudio) {
       const audio = new Audio(selectedAudio.url);
       callAudioRef.current = audio;
@@ -107,26 +113,23 @@ export default function Tools() {
     toast.success("Call ended");
   };
 
-  // Upload fake audio
   const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = () => {
       const base64 = reader.result as string;
       const newAudio: FakeAudio = {
         id: Date.now().toString(),
-        name: file.name.replace(/\.[^/.]+$/, ''), // remove extension
+        name: file.name.replace(/\.[^/.]+$/, ''),
         url: base64
       };
-
       const updated = [...fakeAudios, newAudio];
       setFakeAudios(updated);
       setSelectedAudio(newAudio);
       localStorage.setItem('saha_fake_audios', JSON.stringify(updated));
-      toast.success(`"${newAudio.name}" uploaded as fake call audio`);
+      toast.success(`"${newAudio.name}" uploaded!`);
     };
   };
 
@@ -134,18 +137,15 @@ export default function Tools() {
     const updated = fakeAudios.filter(a => a.id !== id);
     setFakeAudios(updated);
     localStorage.setItem('saha_fake_audios', JSON.stringify(updated));
-    if (selectedAudio?.id === id) {
-      setSelectedAudio(updated[0] || null);
-    }
+    if (selectedAudio?.id === id) setSelectedAudio(updated[0] || null);
     toast.success("Audio deleted");
   };
-  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary to-background p-4 pb-24">
       <div className="max-w-md mx-auto space-y-4">
         <SafetyToolsPanel onStartFakeCall={handleStartFakeCall} />
 
-        {/* Fake Call Audio Upload Section */}
         <Card
           className="p-4 space-y-3 border border-white/40"
           style={{
@@ -155,23 +155,16 @@ export default function Tools() {
         >
           <h3 className="font-semibold text-primary">🎭 Fake Call Conversations</h3>
           <p className="text-xs text-muted-foreground">
-            Upload a real-sounding conversation audio. It will play automatically when you accept the fake call.
+            Upload a conversation audio — it plays when you accept the fake call.
           </p>
 
-          {/* Upload button */}
           <label className="flex items-center gap-2 cursor-pointer w-full py-3 px-4 rounded-xl bg-pink-500 text-white hover:bg-pink-600 transition-all justify-center">
             <Upload className="w-4 h-4" />
             <span className="text-sm font-medium">Upload Conversation Audio</span>
-            <input
-              type="file"
-              accept="audio/*"
-              className="hidden"
-              onChange={handleAudioUpload}
-            />
+            <input type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} />
           </label>
 
-          {/* Saved audios */}
-          {fakeAudios.length > 0 && (
+          {fakeAudios.length > 0 ? (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground font-medium">Saved conversations:</p>
               {fakeAudios.map(audio => (
@@ -202,27 +195,22 @@ export default function Tools() {
                 </div>
               ))}
             </div>
-          )}
-
-          {fakeAudios.length === 0 && (
+          ) : (
             <p className="text-xs text-center text-muted-foreground py-2">
-              No conversations uploaded yet. Upload one to make your fake call sound real!
+              No conversations uploaded yet!
             </p>
           )}
         </Card>
       </div>
 
-      {/* Fake Call Dialog */}
       <Dialog open={showFakeCall} onOpenChange={() => {}}>
         <DialogContent
           className="border-none max-w-sm mx-auto"
           style={{
             background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-            backdropFilter: 'blur(20px)',
           }}
         >
           <div className="flex flex-col items-center justify-center py-8 space-y-6">
-            {/* Caller avatar with pulse */}
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-green-400/30 animate-ping" />
               <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center relative">
@@ -230,7 +218,6 @@ export default function Tools() {
               </div>
             </div>
 
-            {/* Caller name */}
             <div className="text-center space-y-1">
               <input
                 value={callerName}
@@ -239,18 +226,14 @@ export default function Tools() {
                 placeholder="Mom"
               />
               <p className="text-white/60 text-sm animate-pulse">
-                {callAccepted ? '00:' + String(Math.floor(Date.now() / 1000) % 60).padStart(2, '0') : 'Incoming call...'}
+                {callAccepted ? 'On call...' : 'Incoming call...'}
               </p>
             </div>
 
-            {/* Selected audio name */}
             {selectedAudio && !callAccepted && (
-              <p className="text-white/40 text-xs">
-                Will play: {selectedAudio.name}
-              </p>
+              <p className="text-white/40 text-xs">Will play: {selectedAudio.name}</p>
             )}
 
-            {/* Call buttons */}
             <div className="flex gap-12 mt-4">
               <div className="flex flex-col items-center gap-2">
                 <button
