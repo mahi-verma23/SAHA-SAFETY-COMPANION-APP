@@ -142,7 +142,8 @@ export default function Tools() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-secondary to-background p-4 pb-24">
+    <div className="min-h-screen p-4 pb-24 page-enter" 
+      style={{ background: 'linear-gradient(135deg, hsl(340 100% 98%) 0%, hsl(280 100% 98%) 100%)' }}>
       <div className="max-w-md mx-auto space-y-4">
         <SafetyToolsPanel onStartFakeCall={handleStartFakeCall} />
 

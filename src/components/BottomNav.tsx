@@ -1,6 +1,5 @@
 import { Shield, Users, MapPin, MessageSquare, Wrench, Folder } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
   currentTab: string;
@@ -25,7 +24,15 @@ export default function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-2 py-2 grid grid-cols-6 gap-1">
+    <nav
+      className="fixed bottom-0 left-0 right-0 px-3 py-2 grid grid-cols-6 gap-1"
+      style={{
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(236, 72, 153, 0.15)',
+        boxShadow: '0 -4px 20px rgba(236, 72, 153, 0.08)'
+      }}
+    >
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = currentTab === tab.id;
@@ -34,12 +41,15 @@ export default function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
           <button
             key={tab.id}
             onClick={() => handleTabClick(tab)}
-            className={cn(
-              "flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors",
-              isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            )}
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all"
+            style={{
+              background: isActive
+                ? 'linear-gradient(135deg, hsl(340 80% 60%), hsl(280 70% 55%))'
+                : 'transparent',
+              color: isActive ? 'white' : 'hsl(340 6% 50%)',
+              transform: isActive ? 'translateY(-2px)' : 'translateY(0)',
+              boxShadow: isActive ? '0 4px 12px rgba(236, 72, 153, 0.3)' : 'none'
+            }}
           >
             <Icon className="w-5 h-5 mb-0.5" />
             <span className="text-[10px] font-medium">{tab.label}</span>
