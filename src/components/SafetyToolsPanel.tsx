@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mic, Video, Volume2, VolumeX, Phone, Circle, Square } from 'lucide-react';
+import { Mic, Video, Volume2, VolumeX, Phone, Circle, Square , Wrench} from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { toast } from 'sonner';
-
 
 interface SafetyToolsPanelProps {
   onStartFakeCall: () => void;
@@ -311,132 +310,151 @@ const startWhiteScreenBlink = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-primary">Safety Tools</h2>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-2xl flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, hsl(340 80% 60%), hsl(280 70% 55%))' }}
+        >
+          <Wrench className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold gradient-text">Safety Tools</h2>
+          <p className="text-xs text-muted-foreground">Emergency features</p>
+        </div>
+      </div>
 
       {/* Recording Tools */}
       <div className="grid grid-cols-2 gap-3">
-        <Button
+        <button
           onClick={toggleAudioRecording}
-          className={`h-24 rounded-2xl text-white ${
-            isRecordingAudio
-              ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-              : 'bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600'
-          }`}
+          className="h-24 rounded-2xl text-white transition-all card-hover flex flex-col items-center justify-center gap-2"
+          style={{
+            background: isRecordingAudio
+              ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+              : 'linear-gradient(135deg, hsl(340 80% 60%), hsl(340 70% 50%))',
+            boxShadow: isRecordingAudio
+              ? '0 4px 20px rgba(239, 68, 68, 0.4)'
+              : '0 4px 20px rgba(236, 72, 153, 0.3)'
+          }}
         >
-          <div className="flex flex-col items-center gap-2">
-            {isRecordingAudio ? (
-              <Square className="w-6 h-6 fill-current" />
-            ) : (
-              <Mic className="w-6 h-6" />
-            )}
-            <span className="text-sm">
-              {isRecordingAudio ? 'Stop Recording' : 'Voice Record'}
-            </span>
-            {isRecordingAudio && (
-              <Circle className="w-3 h-3 fill-current animate-pulse" />
-            )}
-          </div>
-        </Button>
+          {isRecordingAudio ? <Square className="w-6 h-6 fill-current" /> : <Mic className="w-6 h-6" />}
+          <span className="text-sm font-medium">
+            {isRecordingAudio ? 'Stop Recording' : 'Voice Record'}
+          </span>
+          {isRecordingAudio && <Circle className="w-3 h-3 fill-current animate-pulse" />}
+        </button>
 
-        <Button
+        <button
           onClick={toggleVideoRecording}
-          className={`h-24 rounded-2xl text-white ${
-            isRecordingVideo
-              ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-              : 'bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600'
-          }`}
+          className="h-24 rounded-2xl text-white transition-all card-hover flex flex-col items-center justify-center gap-2"
+          style={{
+            background: isRecordingVideo
+              ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+              : 'linear-gradient(135deg, hsl(280 70% 55%), hsl(280 60% 45%))',
+            boxShadow: isRecordingVideo
+              ? '0 4px 20px rgba(239, 68, 68, 0.4)'
+              : '0 4px 20px rgba(168, 85, 247, 0.3)'
+          }}
         >
-          <div className="flex flex-col items-center gap-2">
-            {isRecordingVideo ? (
-              <Square className="w-6 h-6 fill-current" />
-            ) : (
-              <Video className="w-6 h-6" />
-            )}
-            <span className="text-sm">
-              {isRecordingVideo ? 'Stop Recording' : 'Video Record'}
-            </span>
-            {isRecordingVideo && (
-              <Circle className="w-3 h-3 fill-current animate-pulse" />
-            )}
-          </div>
-        </Button>
+          {isRecordingVideo ? <Square className="w-6 h-6 fill-current" /> : <Video className="w-6 h-6" />}
+          <span className="text-sm font-medium">
+            {isRecordingVideo ? 'Stop Recording' : 'Video Record'}
+          </span>
+          {isRecordingVideo && <Circle className="w-3 h-3 fill-current animate-pulse" />}
+        </button>
       </div>
 
-      {/* Alert Tools */}
-      <Button
+      {/* Siren */}
+      <button
         onClick={toggleSiren}
-        className={`w-full h-24 rounded-2xl text-white ${
-          isSirenActive
-            ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse'
-            : 'bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600'
-        }`}
+        className="w-full h-20 rounded-2xl text-white transition-all card-hover flex items-center justify-center gap-3"
+        style={{
+          background: isSirenActive
+            ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+            : 'linear-gradient(135deg, #f97316, #ea580c)',
+          boxShadow: isSirenActive
+            ? '0 4px 20px rgba(239, 68, 68, 0.5)'
+            : '0 4px 20px rgba(249, 115, 22, 0.3)',
+          animation: isSirenActive ? 'pulse 1s infinite' : 'none'
+        }}
       >
-        <div className="flex flex-col items-center gap-2">
-          {isSirenActive ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-          <span className="text-sm">
-            {isSirenActive ? 'Stop Siren' : 'Emergency Siren'}
-          </span>
+        {isSirenActive ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+        <div className="text-left">
+          <p className="font-medium">{isSirenActive ? 'Stop Siren' : 'Emergency Siren'}</p>
+          <p className="text-xs opacity-80">{isSirenActive ? 'Siren active...' : 'Loud alarm sound'}</p>
         </div>
-      </Button>
+      </button>
 
       {/* Flashlight */}
-      <Button
+      <button
         onClick={toggleFlashlight}
-        className={`w-full h-24 rounded-2xl text-white ${
-          isFlashlightOn
-            ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 animate-pulse'
-            : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800'
-        }`}
+        className="w-full h-20 rounded-2xl text-white transition-all card-hover flex items-center justify-center gap-3"
+        style={{
+          background: isFlashlightOn
+            ? 'linear-gradient(135deg, #eab308, #ca8a04)'
+            : 'linear-gradient(135deg, #374151, #1f2937)',
+          boxShadow: isFlashlightOn
+            ? '0 4px 20px rgba(234, 179, 8, 0.4)'
+            : '0 4px 20px rgba(0,0,0,0.2)',
+          animation: isFlashlightOn ? 'pulse 1s infinite' : 'none'
+        }}
       >
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-2xl">🔦</span>
-          <span className="text-sm font-medium">
-            {isFlashlightOn ? 'Stop Flashlight' : 'Emergency Flashlight'}
-          </span>
-          <span className="text-xs opacity-80">
-            {isFlashlightOn ? 'Blinking...' : 'Blinks for emergency signal'}
-          </span>
+        <span className="text-2xl">🔦</span>
+        <div className="text-left">
+          <p className="font-medium">{isFlashlightOn ? 'Stop Flashlight' : 'Emergency Flashlight'}</p>
+          <p className="text-xs opacity-80">{isFlashlightOn ? 'Blinking...' : 'Blinks for distress signal'}</p>
         </div>
-      </Button>
+      </button>
 
       {/* Fake Call */}
-      <Button
+      <button
         onClick={onStartFakeCall}
-        className="w-full h-20 bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white rounded-2xl"
+        className="w-full h-20 rounded-2xl text-white transition-all card-hover flex items-center justify-center gap-3 btn-gradient"
       >
-        <div className="flex items-center justify-center gap-3">
-          <Phone className="w-6 h-6" />
-          <div className="text-left">
-            <p className="font-medium">Fake Call</p>
-            <p className="text-xs opacity-90">Simulate incoming call</p>
-          </div>
+        <Phone className="w-6 h-6" />
+        <div className="text-left">
+          <p className="font-medium">Fake Call</p>
+          <p className="text-xs opacity-90">Simulate incoming call</p>
         </div>
-      </Button>
+      </button>
 
       {/* Recorded Media */}
       {(audioUrl || videoUrl) && (
-        <Card className="p-4 bg-card rounded-2xl space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Recorded Media</h3>
+        <div
+          className="p-4 rounded-2xl space-y-3"
+          style={{
+            background: 'rgba(255,255,255,0.7)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(236, 72, 153, 0.15)'
+          }}
+        >
+          <h3 className="text-sm font-semibold gradient-text">Recorded Media</h3>
           {audioUrl && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Audio Recording</p>
+              <p className="text-xs text-muted-foreground">🎙️ Audio</p>
               <audio src={audioUrl} controls className="w-full" />
             </div>
           )}
           {videoUrl && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Video Recording</p>
-              <video src={videoUrl} controls className="w-full rounded-lg" />
+              <p className="text-xs text-muted-foreground">📹 Video</p>
+              <video src={videoUrl} controls className="w-full rounded-xl" />
             </div>
           )}
-        </Card>
+        </div>
       )}
 
-      <Card className="bg-primary/5 border-primary/20 rounded-2xl p-4">
-        <p className="text-sm text-foreground">
-          💡 <strong>Tip:</strong> Recordings are stored locally on your device for privacy
+      <div
+        className="p-4 rounded-2xl"
+        style={{
+          background: 'rgba(236, 72, 153, 0.05)',
+          border: '1px solid rgba(236, 72, 153, 0.15)'
+        }}
+      >
+        <p className="text-sm text-muted-foreground">
+          💡 <strong>Tip:</strong> Recordings are stored locally for privacy
         </p>
-      </Card>
+      </div>
     </div>
   );
-}
